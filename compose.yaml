@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongo:8
-    container_name: user-service-mongodb
+    container_name: harn-kan-user-mongodb
 
     restart: unless-stopped
 
@@ -12,9 +12,13 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+      MONGO_DATABASE: ${MONGO_DATABASE}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
 
     volumes:
       - mongodb_data:/data/db
+      - ./docker/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
 
     healthcheck:
       test:
