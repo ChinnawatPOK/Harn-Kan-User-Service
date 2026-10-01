@@ -6,9 +6,11 @@ const startServer = async () => {
   try {
     await connectDatabase();
 
-    app.listen(env.PORT, () => {
+    const server = app.listen(env.PORT, () => {
       console.log(`User Service running on port ${env.PORT}`);
     });
+
+    return server;
   } catch (error) {
     console.error("Failed to start User Service:", error.message);
 
