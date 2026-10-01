@@ -12,14 +12,13 @@ const errorHandler = (err, req, res, next) => {
       },
     };
 
-    if (err.details) {
+    if (err.details !== undefined) {
       response.error.details = err.details;
     }
 
     return res.status(err.statusCode).json(response);
   }
 
-  // Unexpected error
   console.error(err);
 
   const internalError = ErrorCodes.INTERNAL_SERVER_ERROR;

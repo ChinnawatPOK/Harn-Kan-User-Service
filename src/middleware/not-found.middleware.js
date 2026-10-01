@@ -1,12 +1,8 @@
-const notFoundHandler = (req, res) => {
-  res.status(404).json({
-    success: false,
+import AppError from "../shared/errors/app-error.js";
+import { ErrorCodes } from "../shared/errors/error-codes.js";
 
-    error: {
-      code: "ROUTE_NOT_FOUND",
-      message: "Resource not found",
-    },
-  });
+const notFoundHandler = (req, res, next) => {
+  next(new AppError(ErrorCodes.NOT_FOUND));
 };
 
 export default notFoundHandler;
