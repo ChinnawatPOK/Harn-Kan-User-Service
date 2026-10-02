@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import env from "./config/env.js";
+import requestLogger from "./middleware/request-logger.middleware.js";
 import healthRoutes from "./health/health.route.js";
 import authRoutes from "./modules/auth/auth.route.js";
 import userRoutes from "./modules/user/user.route.js";
@@ -9,6 +10,8 @@ import notFoundHandler from "./middleware/not-found.middleware.js";
 import errorHandler from "./middleware/error.middleware.js";
 
 const app = express();
+
+app.use(requestLogger);
 
 app.use(helmet());
 

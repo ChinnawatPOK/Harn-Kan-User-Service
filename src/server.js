@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import app from "./app.js";
 import env from "./config/env.js";
+import logger from "./config/logger.js";
 import connectDatabase from "./config/database.js";
 
 let server;
@@ -11,26 +12,48 @@ const startServer = async () => {
     await connectDatabase();
 
     server = app.listen(env.PORT, () => {
-      console.log(`User Service running on port ${env.PORT}`);
+      logger.info(
+        {
+          port: env.PORT,
+          environment: env.NODE_ENV,
+        },
+        "User Service started"
+      );
     });
   } catch (error) {
-    console.error("Failed to start User Service:", error);
+    logger.fatal({ err: error }, "Failed to start User Service");
     process.exit(1);
   }
 };
 
 const shutdown = async (signal) => {
-  console.log(`${signal} received. Shutting down...`);
+  logger.info({ signal }, "Shutdown signal received");
 
-  if (server) {
-    server.close(async () => {
-      await mongoose.connection.close();
+  try {
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
 
-      console.log("MongoDB connection closed");
-      console.log("Server shut down successfully");
+          resolve();
+        });
+      });
 
-      process.exit(0);
-    });
+      logger.info("HTTP server closed");
+    }
+
+    await mongoose.connection.close();
+
+    logger.info("MongoDB connection closed");
+    logger.info("User Service shutdown completed");
+
+    process.exit(0);
+  } catch (error) {
+    logger.error({ err: error }, "Error during graceful shutdown");
+    process.exit(1);
   }
 };
 
