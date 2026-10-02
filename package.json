@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "test": "jest"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
