@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { pinoHttp } from "pino-http";
-
 import logger from "../config/logger.js";
 
 const requestLogger = pinoHttp({
@@ -33,7 +32,6 @@ const requestLogger = pinoHttp({
     }),
   },
 
-  // Skip noisy probes from Docker / orchestrator health checks
   autoLogging: {
     ignore: (req) => req.url.startsWith("/health"),
   },
