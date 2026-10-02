@@ -11,6 +11,12 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET must contain at least 32 characters"),
 
   JWT_EXPIRES_IN: z.string().default("1d"),
+
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+
+  LOG_LEVEL: z
+    .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+    .default(process.env.NODE_ENV === "test" ? "silent" : "info"),
 });
 
 const result = envSchema.safeParse(process.env);

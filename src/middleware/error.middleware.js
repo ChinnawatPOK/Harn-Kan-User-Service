@@ -19,7 +19,7 @@ const errorHandler = (err, req, res, next) => {
     return res.status(err.statusCode).json(response);
   }
 
-  console.error(err);
+  req.log.error({ err }, "Unhandled error");
 
   const internalError = ErrorCodes.INTERNAL_SERVER_ERROR;
 
