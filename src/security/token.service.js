@@ -4,8 +4,9 @@ import AppError from "../shared/errors/app-error.js";
 import { ErrorCodes } from "../shared/errors/error-codes.js";
 
 const generateAccessToken = (userId) => {
-  return jwt.sign({}, env.JWT_SECRET, {
-    subject: userId,
+  const id = String(userId);
+  return jwt.sign({ id }, env.JWT_SECRET, {
+    subject: id,
     expiresIn: env.JWT_EXPIRES_IN,
   });
 };
