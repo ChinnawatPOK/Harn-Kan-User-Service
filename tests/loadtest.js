@@ -1,18 +1,42 @@
 /* global __ENV, __VU */
 import http from "k6/http";
+import exec from "k6/execution";
 import { check, sleep } from "k6";
 
+const SCENARIO = __ENV.SCENARIO || "journey";
+const VUS = Number(__ENV.VUS || 200);
+const LOGIN_RATE = Number(__ENV.LOGIN_RATE || 20);
+
+const scenarios = {
+  journey: {
+    executor: "ramping-vus",
+    exec: "journey",
+    stages: [
+      { duration: "30s", target: VUS },
+      { duration: "1m", target: VUS },
+      { duration: "30s", target: 0 },
+    ],
+  },
+  login: {
+    executor: "constant-arrival-rate",
+    exec: "loginOnly",
+    rate: LOGIN_RATE,
+    timeUnit: "1s",
+    duration: "1m",
+    preAllocatedVUs: LOGIN_RATE * 2,
+    maxVUs: LOGIN_RATE * 10,
+  },
+};
+
+if (!scenarios[SCENARIO]) {
+  throw new Error(`Unknown SCENARIO "${SCENARIO}". Use "journey" or "login".`);
+}
+
 export const options = {
-  stages: [
-    { duration: "30s", target: 200 },
-    { duration: "1m", target: 200 },
-    { duration: "30s", target: 0 },
-  ],
-  setupTimeout: "2m",
-  teardownTimeout: "2m",
+  scenarios: { [SCENARIO]: scenarios[SCENARIO] },
   thresholds: {
-    "http_req_duration{scenario:default}": ["p(95)<2000"],
-    "http_req_failed{scenario:default}": ["rate<0.01"],
+    http_req_duration: ["p(95)<2000"],
+    http_req_failed: ["rate<0.01"],
     "http_req_duration{name:login}": ["p(95)<2000"],
     "http_req_failed{name:login}": ["rate<0.01"],
     "http_req_duration{name:get_current_user}": ["p(95)<2000"],
@@ -21,48 +45,20 @@ export const options = {
 };
 
 const BASE_URL = (__ENV.BASE_URL || "http://localhost:3000/api/v1").replace(/\/+$/, "");
-const USER_COUNT = Number(__ENV.LOADTEST_USERS || 200);
+
+const POOL_SIZE = Number(__ENV.LOADTEST_USERS || 200);
 const PASSWORD = "LoadTest1234";
-const BATCH_SIZE = 20;
-const JSON_HEADERS = { "Content-Type": "application/json" };
 
-function runBatched(requests) {
-  const responses = [];
-  for (let i = 0; i < requests.length; i += BATCH_SIZE) {
-    responses.push(...http.batch(requests.slice(i, i + BATCH_SIZE)));
-  }
-  return responses;
-}
-
-export function setup() {
-  const runId = String(Date.now() % 100000).padStart(5, "0");
-  const users = Array.from({ length: USER_COUNT }, (_, i) => ({
-    phone_number: `08${runId}${String(i).padStart(3, "0")}`,
+function poolAccount(index) {
+  return {
+    phone_number: `0890${String(index % POOL_SIZE).padStart(6, "0")}`,
     password: PASSWORD,
-  }));
-
-  const responses = runBatched(
-    users.map((user, i) => ({
-      method: "POST",
-      url: `${BASE_URL}/auth/register`,
-      body: JSON.stringify({ name: `Load Test ${i}`, ...user }),
-      params: { headers: JSON_HEADERS, tags: { name: "setup_register" } },
-    }))
-  );
-
-  const registered = responses.filter((response) => response.status === 201).length;
-  if (registered < users.length) {
-    throw new Error(`Registered only ${registered} of ${users.length} load test accounts.`);
-  }
-
-  return { users };
+  };
 }
 
-let accessToken = null;
-
-function login(user) {
-  const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify(user), {
-    headers: JSON_HEADERS,
+function login(account) {
+  const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify(account), {
+    headers: { "Content-Type": "application/json" },
     tags: { name: "login" },
   });
 
@@ -75,9 +71,11 @@ function login(user) {
   return loginSucceeded ? loginRes.json("data.access_token") : null;
 }
 
-export default function ({ users }) {
+let accessToken = null;
+
+export function journey() {
   if (!accessToken) {
-    accessToken = login(users[(__VU - 1) % users.length]);
+    accessToken = login(poolAccount(__VU - 1));
   }
 
   if (accessToken) {
@@ -98,38 +96,16 @@ export default function ({ users }) {
   sleep(Math.random() + 1);
 }
 
-export function teardown({ users }) {
-  const loginResponses = runBatched(
-    users.map((user) => ({
-      method: "POST",
-      url: `${BASE_URL}/auth/login`,
-      body: JSON.stringify(user),
-      params: { headers: JSON_HEADERS, tags: { name: "teardown_login" } },
-    }))
-  );
-
-  const deactivateResponses = runBatched(
-    loginResponses
-      .filter((response) => response.status === 200)
-      .map((response) => ({
-        method: "DELETE",
-        url: `${BASE_URL}/users/me`,
-        params: {
-          headers: { Authorization: `Bearer ${response.json("data.access_token")}` },
-          tags: { name: "teardown_deactivate" },
-        },
-      }))
-  );
-
-  const deactivated = deactivateResponses.filter((response) => response.status < 300).length;
-  console.log(`Deactivated ${deactivated} of ${users.length} load test accounts.`);
+export function loginOnly() {
+  login(poolAccount(exec.scenario.iterationInTest));
 }
 
 export function handleSummary(data) {
   const result = {
     generatedAt: new Date().toISOString(),
     baseUrl: BASE_URL,
-    stages: options.stages,
+    scenario: SCENARIO,
+    scenarios: options.scenarios,
     thresholds: options.thresholds,
     summary: data,
   };

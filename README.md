@@ -71,19 +71,39 @@ npm run dev
 
 ## Load test
 
-Start the API and MongoDB, then run the k6 load test with credentials for an
-existing test account:
+The load test logs in with a pool of test accounts (`0890000000` to
+`0890000199`, password `LoadTest1234`). Start the API and MongoDB, then run
+(macOS, Linux or Git Bash):
 
-```powershell
-k6 run `
-  -e LOADTEST_PHONE_NUMBER=your-test-phone-number `
-  -e LOADTEST_PASSWORD=your-test-password `
-  tests/loadtest.js
+```bash
+tests/run-loadtest.sh               # journey: ramp up to 200 users
+tests/run-loadtest.sh journey 50    # journey: ramp up to 50 users
+tests/run-loadtest.sh login         # login: 20 logins per second for 1 minute
+tests/run-loadtest.sh login 50      # login: 50 logins per second for 1 minute
 ```
 
-The test ramps up to 200 virtual users, holds for one minute, and ramps down.
-It exercises login and the authenticated current-user endpoint. The default API
-URL is `http://localhost:3000/api/v1`; override it with `-e BASE_URL=<url>` when
-the API is running elsewhere.
-Each run saves the full k6 summary to `tests/loadtest-results.json`, replacing
-the previous run's result.
+The script first registers any pool accounts that do not exist yet
+(`tests/seed-loadtest-users.sh`), so the first run creates them and later runs
+reuse them. The test itself never creates or deletes users.
+
+There are two scenarios:
+
+- **journey**: users ramp up over 30 seconds, hold for one minute, and ramp
+  down. Each virtual user logs in once with its own pool account, then keeps
+  calling the current-user endpoint, like a real client.
+- **login**: a fixed rate of logins per second for one minute, to measure how
+  much login traffic the API can take. Login is CPU-heavy (bcrypt), so it is
+  tested on its own.
+
+k6 reports `login` and `get_current_user` separately, each with its own
+thresholds (p95 under 2 seconds, under 1% failed requests). The default API URL
+is `http://localhost:3000/api/v1`; override it with `BASE_URL=<url>`. Each run
+saves the full k6 summary to `tests/loadtest-results.json`, replacing the
+previous run's result.
+
+To run k6 directly (for example from PowerShell), seed the pool first, then:
+
+```powershell
+k6 run -e SCENARIO=journey -e VUS=200 tests/loadtest.js
+k6 run -e SCENARIO=login -e LOGIN_RATE=20 tests/loadtest.js
+```
