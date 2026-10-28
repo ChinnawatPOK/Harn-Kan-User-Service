@@ -1,6 +1,5 @@
-/* global __ENV, __VU */
+/* global __ENV */
 import http from "k6/http";
-import exec from "k6/execution";
 import { check, sleep } from "k6";
 
 const SCENARIO = __ENV.SCENARIO || "journey";
@@ -46,18 +45,13 @@ export const options = {
 
 const BASE_URL = (__ENV.BASE_URL || "http://localhost:3000/api/v1").replace(/\/+$/, "");
 
-const POOL_SIZE = Number(__ENV.LOADTEST_USERS || 200);
-const PASSWORD = "LoadTest1234";
+const ACCOUNT = {
+  phone_number: __ENV.LOADTEST_PHONE_NUMBER || "0899999999",
+  password: __ENV.LOADTEST_PASSWORD || "LoadTest1234",
+};
 
-function poolAccount(index) {
-  return {
-    phone_number: `0890${String(index % POOL_SIZE).padStart(6, "0")}`,
-    password: PASSWORD,
-  };
-}
-
-function login(account) {
-  const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify(account), {
+function login() {
+  const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify(ACCOUNT), {
     headers: { "Content-Type": "application/json" },
     tags: { name: "login" },
   });
@@ -75,7 +69,7 @@ let accessToken = null;
 
 export function journey() {
   if (!accessToken) {
-    accessToken = login(poolAccount(__VU - 1));
+    accessToken = login();
   }
 
   if (accessToken) {
@@ -97,7 +91,7 @@ export function journey() {
 }
 
 export function loginOnly() {
-  login(poolAccount(exec.scenario.iterationInTest));
+  login();
 }
 
 export function handleSummary(data) {
