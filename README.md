@@ -68,3 +68,22 @@ npm run dev
 | `npm test`       | Run tests                        |
 | `npm run lint`   | Lint                             |
 | `npm run format` | Format with Prettier             |
+
+## Load test
+
+Start the API and MongoDB, then run the k6 load test with credentials for an
+existing test account:
+
+```powershell
+k6 run `
+  -e LOADTEST_PHONE_NUMBER=your-test-phone-number `
+  -e LOADTEST_PASSWORD=your-test-password `
+  tests/loadtest.js
+```
+
+The test ramps up to 200 virtual users, holds for one minute, and ramps down.
+It exercises login and the authenticated current-user endpoint. The default API
+URL is `http://localhost:3000/api/v1`; override it with `-e BASE_URL=<url>` when
+the API is running elsewhere.
+Each run saves the full k6 summary to `tests/loadtest-results.json`, replacing
+the previous run's result.
