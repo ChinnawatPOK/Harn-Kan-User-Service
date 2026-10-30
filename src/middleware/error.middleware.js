@@ -2,13 +2,14 @@ import AppError from "../shared/errors/app-error.js";
 import { ErrorCodes } from "../shared/errors/error-codes.js";
 import env from "../config/env.js";
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   if (err instanceof AppError) {
     const response = {
       success: false,
       error: {
         code: err.code,
         message: err.message,
+        timestamp: new Date().toISOString(),
       },
     };
 
@@ -28,6 +29,7 @@ const errorHandler = (err, req, res, next) => {
     error: {
       code: internalError.code,
       message: internalError.message,
+      timestamp: new Date().toISOString(),
     },
   };
 

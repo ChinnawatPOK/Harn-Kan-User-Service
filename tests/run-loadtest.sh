@@ -19,7 +19,7 @@ esac
 
 status=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/auth/register" \
   -H 'Content-Type: application/json' \
-  -d "{\"name\":\"Load Test\",\"phone_number\":\"$PHONE\",\"password\":\"$PASSWORD\"}" || true)
+  -d "{\"fullName\":\"Load Test User\",\"phoneNumber\":\"$PHONE\",\"password\":\"$PASSWORD\",\"acceptedTerms\":true}" || true)
 
 case "$status" in
   201 | 409) ;;

@@ -15,11 +15,21 @@ const userSchema = new mongoose.Schema(
       maxlength: 100,
     },
 
+    display_name: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+
     phone_number: {
       type: String,
       required: true,
       unique: true,
       trim: true,
+    },
+
+    terms_accepted_at: {
+      type: Date,
     },
 
     password_hash: {

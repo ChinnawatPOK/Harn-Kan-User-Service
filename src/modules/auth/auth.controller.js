@@ -1,25 +1,13 @@
 import { authService } from "./auth.service.js";
-import { successResponse } from "../../shared/utils/response.js";
 
 const register = async (req, res) => {
-  const user = await authService.register(req.validated.body);
-
-  return successResponse(res, {
-    statusCode: 201,
-    message: "User registered successfully",
-    data: {
-      user,
-    },
-  });
+  const result = await authService.register(req.validated.body);
+  return res.status(201).json(result);
 };
 
 const login = async (req, res) => {
   const result = await authService.login(req.validated.body);
-
-  return successResponse(res, {
-    message: "Login successful",
-    data: result,
-  });
+  return res.status(200).json(result);
 };
 
 export const authController = {

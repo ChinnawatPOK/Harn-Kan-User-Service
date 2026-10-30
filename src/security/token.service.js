@@ -3,9 +3,9 @@ import env from "../config/env.js";
 import AppError from "../shared/errors/app-error.js";
 import { ErrorCodes } from "../shared/errors/error-codes.js";
 
-const generateAccessToken = (userId) => {
+const generateAccessToken = (userId, name) => {
   const id = String(userId);
-  return jwt.sign({ id }, env.JWT_SECRET, {
+  return jwt.sign({ id, ...(name ? { name } : {}) }, env.JWT_SECRET, {
     subject: id,
     expiresIn: env.JWT_EXPIRES_IN,
   });

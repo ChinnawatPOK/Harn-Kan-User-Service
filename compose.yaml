@@ -27,6 +27,11 @@ services:
       retries: 5
       start_period: 10s
 
+    networks:
+      default:
+        aliases:
+          - user-service
+
 networks:
   default:
     name: harnkan_default

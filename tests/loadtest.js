@@ -46,7 +46,7 @@ export const options = {
 const BASE_URL = (__ENV.BASE_URL || "http://localhost:3000/api/v1").replace(/\/+$/, "");
 
 const ACCOUNT = {
-  phone_number: __ENV.LOADTEST_PHONE_NUMBER || "0899999999",
+  phoneNumber: __ENV.LOADTEST_PHONE_NUMBER || "0899999999",
   password: __ENV.LOADTEST_PASSWORD || "LoadTest1234",
 };
 
@@ -58,11 +58,11 @@ function login() {
 
   const loginSucceeded = check(loginRes, {
     "login status is 200": (response) => response.status === 200,
-    "login returns access token": (response) =>
-      response.status === 200 && typeof response.json("data.access_token") === "string",
+    "login returns token": (response) =>
+      response.status === 200 && typeof response.json("token") === "string",
   });
 
-  return loginSucceeded ? loginRes.json("data.access_token") : null;
+  return loginSucceeded ? loginRes.json("token") : null;
 }
 
 let accessToken = null;

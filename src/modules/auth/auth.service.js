@@ -1,30 +1,39 @@
 import { userRepository } from "../user/user.repository.js";
-import { toUserResponse } from "../user/dto/user-response.dto.js";
 import { tokenService } from "../../security/token.service.js";
 import { passwordService } from "../../security/password.service.js";
+import {
+  toAuthUserResponse,
+  toDisplayName,
+} from "./dto/auth-response.dto.js";
 import AppError from "../../shared/errors/app-error.js";
 import { ErrorCodes } from "../../shared/errors/error-codes.js";
 
-const register = async ({ name, phone_number, password }) => {
-  const existingUser = await userRepository.findByPhoneNumber(phone_number);
+const register = async ({ fullName, phoneNumber, password, acceptedTerms }) => {
+  const existingUser = await userRepository.findByPhoneNumber(phoneNumber);
 
   if (existingUser) {
     throw new AppError(ErrorCodes.PHONE_ALREADY_REGISTERED);
   }
 
   const passwordHash = await passwordService.hash(password);
+  const displayName = toDisplayName(fullName);
 
   const user = await userRepository.create({
-    name,
-    phone_number,
+    name: fullName,
+    display_name: displayName,
+    phone_number: phoneNumber,
     password_hash: passwordHash,
+    terms_accepted_at: acceptedTerms ? new Date() : undefined,
   });
 
-  return toUserResponse(user);
+  return {
+    token: tokenService.generateAccessToken(user._id, displayName),
+    user: toAuthUserResponse(user),
+  };
 };
 
-const login = async ({ phone_number, password }) => {
-  const user = await userRepository.findActiveByPhoneNumberWithPassword(phone_number);
+const login = async ({ phoneNumber, password }) => {
+  const user = await userRepository.findActiveByPhoneNumberWithPassword(phoneNumber);
 
   if (!user) {
     throw new AppError(ErrorCodes.INVALID_CREDENTIALS);
@@ -36,12 +45,12 @@ const login = async ({ phone_number, password }) => {
     throw new AppError(ErrorCodes.INVALID_CREDENTIALS);
   }
 
-  const accessToken = tokenService.generateAccessToken(user._id);
-
   return {
-    access_token: accessToken,
-    token_type: "Bearer",
-    user: toUserResponse(user),
+    token: tokenService.generateAccessToken(
+      user._id,
+      toDisplayName(user.display_name ?? user.name)
+    ),
+    user: toAuthUserResponse(user),
   };
 };
 

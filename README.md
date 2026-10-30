@@ -12,7 +12,8 @@ Set `JWT_SECRET` in `.env` (at least 32 characters).
 
 ## Run with Docker
 
-Starts the API and MongoDB:
+The API container joins the external `harnkan_default` network. MongoDB must
+already be available there at the hostname `mongodb`.
 
 ```bash
 docker compose up -d --build
@@ -24,10 +25,10 @@ docker compose up -d --build
 
 ## Run locally
 
-Start only MongoDB in Docker, then run the API with hot reload:
+Start MongoDB separately and make sure `MONGODB_URI` in `.env` points to it,
+then run the API with hot reload:
 
 ```bash
-docker compose up -d mongodb
 npm install
 npm run dev
 ```
@@ -58,6 +59,38 @@ npm run dev
 | GET    | `/health/ready`         | Readiness (DB + shutdown state) |
 
 `/users/me` routes require `Authorization: Bearer <token>`.
+
+The mobile app calls registration through the Gateway at
+`POST http://localhost:8080/api/auth/register`. The Gateway rewrites this to
+`POST /api/v1/auth/register` inside this service. The request body is:
+
+```json
+{
+  "fullName": "Ploy Srisuk",
+  "phoneNumber": "+66812345678",
+  "password": "your-password",
+  "acceptedTerms": true
+}
+```
+
+Registration requires `acceptedTerms: true`, stores the full name and
+acceptance time, and returns HTTP 201 with a JWT and abbreviated display name:
+
+```json
+{
+  "token": "<JWT>",
+  "user": {
+    "id": "<user-id>",
+    "name": "Ploy S."
+  }
+}
+```
+
+Login uses `POST http://localhost:8080/api/auth/login` with
+`{ "phoneNumber": "+66812345678", "password": "your-password" }` and returns
+HTTP 200 with the same `{ "token", "user": { "id", "name" } }` response shape.
+Invalid phone numbers and passwords both return HTTP 401 with
+`INVALID_CREDENTIALS`.
 
 ## Scripts
 
