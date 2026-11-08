@@ -5,6 +5,7 @@ import validate from "../../middleware/validate.middleware.js";
 
 import { userController } from "./user.controller.js";
 import { updateUserSchema } from "./dto/update-user.dto.js";
+import { updateLocationSchema } from "./dto/update-location.dto.js";
 
 const router = Router();
 
@@ -13,6 +14,8 @@ router.use(auth);
 router.get("/me", userController.getMe);
 
 router.put("/me", validate(updateUserSchema), userController.updateMe);
+
+router.patch("/me/location", validate(updateLocationSchema), userController.updateMyLocation);
 
 router.delete("/me", userController.deactivateMe);
 

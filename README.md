@@ -47,17 +47,44 @@ npm run dev
 
 ## API
 
-| Method | Path                    | Description                     |
-| ------ | ----------------------- | ------------------------------- |
-| POST   | `/api/v1/auth/register` | Register a user                 |
-| POST   | `/api/v1/auth/login`    | Log in, returns a JWT           |
-| GET    | `/api/v1/users/me`      | Get current user                |
-| PUT    | `/api/v1/users/me`      | Update current user             |
-| DELETE | `/api/v1/users/me`      | Deactivate current user         |
-| GET    | `/health/live`          | Liveness check                  |
-| GET    | `/health/ready`         | Readiness (DB + shutdown state) |
+| Method | Path                        | Description                     |
+| ------ | --------------------------- | ------------------------------- |
+| POST   | `/api/v1/auth/register`     | Register a user                 |
+| POST   | `/api/v1/auth/login`        | Log in, returns a JWT           |
+| GET    | `/api/v1/users/me`          | Get current user                |
+| PUT    | `/api/v1/users/me`          | Update current user             |
+| PATCH  | `/api/v1/users/me/location` | Report the user's location      |
+| DELETE | `/api/v1/users/me`          | Deactivate current user         |
+| GET    | `/internal/users/nearby`    | Find active users near a point  |
+| GET    | `/health/live`              | Liveness check                  |
+| GET    | `/health/ready`             | Readiness (DB + shutdown state) |
 
 `/users/me` routes require `Authorization: Bearer <token>`.
+
+`/internal` routes have no authentication of their own. The gateway never routes them, so port 3000 must not be reachable from outside.
+
+### Location
+
+`PATCH /api/v1/users/me/location` takes `{ "latitude": 13.7563, "longitude": 100.5018 }`. The server sets `location_updated_at` from its own clock and leaves `updated_at` unchanged. The response `data` contains only `latitude` and `longitude`.
+
+### Nearby users
+
+`GET /internal/users/nearby` returns active users whose location was reported recently enough. Users who never reported one are not included.
+
+| Query           | Required | Default | Notes                                    |
+| --------------- | -------- | ------- | ---------------------------------------- |
+| `lat`, `lng`    | yes      | —       | The centre point                         |
+| `radiusMeters`  | no       | `500`   | Up to `50000`; a distance equal to it counts |
+| `maxAgeMinutes` | no       | `1440`  | How old `location_updated_at` may be     |
+| `limit`         | no       | `500`   | Page size, up to `1000`                  |
+| `cursor`        | no       | —       | `nextCursor` from the previous page      |
+
+```json
+{
+  "success": true,
+  "data": { "userIds": ["user-101", "user-205"], "nextCursor": null }
+}
+```
 
 ## Scripts
 

@@ -6,6 +6,7 @@ import requestLogger from "./middleware/request-logger.middleware.js";
 import healthRoutes from "./health/health.route.js";
 import authRoutes from "./modules/auth/auth.route.js";
 import userRoutes from "./modules/user/user.route.js";
+import internalUserRoutes from "./modules/user/user.internal.route.js";
 import notFoundHandler from "./middleware/not-found.middleware.js";
 import errorHandler from "./middleware/error.middleware.js";
 
@@ -33,6 +34,8 @@ app.use("/health", healthRoutes);
 // Application APIs
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+
+app.use("/internal/users", internalUserRoutes);
 
 // Error handling
 app.use(notFoundHandler);

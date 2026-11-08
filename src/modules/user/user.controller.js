@@ -18,6 +18,18 @@ const updateMe = async (req, res) => {
   });
 };
 
+const updateMyLocation = async (req, res) => {
+  const location = await userService.updateCurrentUserLocation(
+    req.auth.userId,
+    req.validated.body
+  );
+
+  return successResponse(res, {
+    message: "Location updated successfully",
+    data: location,
+  });
+};
+
 const deactivateMe = async (req, res) => {
   await userService.deactivateCurrentUser(req.auth.userId);
 
@@ -26,8 +38,18 @@ const deactivateMe = async (req, res) => {
   });
 };
 
+const getNearbyUsers = async (req, res) => {
+  const nearby = await userService.findNearbyUserIds(req.validated.query);
+
+  return successResponse(res, {
+    data: nearby,
+  });
+};
+
 export const userController = {
   getMe,
   updateMe,
+  updateMyLocation,
   deactivateMe,
+  getNearbyUsers,
 };

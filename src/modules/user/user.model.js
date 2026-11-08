@@ -41,6 +41,10 @@ const userSchema = new mongoose.Schema(
       },
     },
 
+    location_updated_at: {
+      type: Date,
+    },
+
     notification_prefs: {
       type: [String],
       default: [],

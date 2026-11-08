@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-const locationSchema = z.object({
-  type: z.literal("Point"),
-
-  coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]),
-});
-
 const updateUserBodySchema = z
   .object({
     name: z
@@ -16,8 +10,6 @@ const updateUserBodySchema = z
       .optional(),
 
     phone_number: z.string().trim().min(1, "Phone number is required").optional(),
-
-    location: locationSchema.optional(),
 
     notification_prefs: z.array(z.string()).optional(),
   })

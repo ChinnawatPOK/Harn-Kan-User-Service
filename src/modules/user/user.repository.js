@@ -1,5 +1,7 @@
 import User from "./user.model.js";
 
+const EARTH_RADIUS_METERS = 6_371_000;
+
 const findActiveById = (id) => {
   return User.findOne({
     _id: id,
@@ -40,6 +42,65 @@ const updateActiveById = (id, updates) => {
   );
 };
 
+const updateLocationById = (id, { latitude, longitude }) => {
+  return User.findOneAndUpdate(
+    {
+      _id: id,
+      is_active: true,
+    },
+    {
+      $set: {
+        location: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        location_updated_at: new Date(),
+      },
+    },
+    {
+      new: true,
+      runValidators: true,
+      timestamps: false,
+    }
+  );
+};
+
+const findActiveIdsWithinRadius = ({
+  latitude,
+  longitude,
+  radiusMeters,
+  updatedSince,
+  limit,
+  cursor,
+}) => {
+  return User.find(
+    {
+      is_active: true,
+      location_updated_at: {
+        $gte: updatedSince,
+      },
+      location: {
+        $geoWithin: {
+          $centerSphere: [[longitude, latitude], radiusMeters / EARTH_RADIUS_METERS],
+        },
+      },
+      ...(cursor && {
+        _id: {
+          $gt: cursor,
+        },
+      }),
+    },
+    {
+      _id: 1,
+    }
+  )
+    .sort({
+      _id: 1,
+    })
+    .limit(limit)
+    .lean();
+};
+
 const deactivateById = (id) => {
   return User.findOneAndUpdate(
     {
@@ -63,5 +124,7 @@ export const userRepository = {
   findActiveByPhoneNumberWithPassword,
   create,
   updateActiveById,
+  updateLocationById,
+  findActiveIdsWithinRadius,
   deactivateById,
 };
