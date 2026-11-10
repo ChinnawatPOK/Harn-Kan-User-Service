@@ -45,11 +45,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
 
-    notification_prefs: {
-      type: [String],
-      default: [],
-    },
-
     is_active: {
       type: Boolean,
       default: true,

@@ -4,7 +4,6 @@ export const toUserResponse = (user) => ({
   phone_number: user.phone_number,
   location: user.location,
   location_updated_at: user.location_updated_at,
-  notification_prefs: user.notification_prefs,
   created_at: user.created_at,
   updated_at: user.updated_at,
 });

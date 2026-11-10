@@ -36,7 +36,7 @@ const login = async ({ phone_number, password }) => {
     throw new AppError(ErrorCodes.INVALID_CREDENTIALS);
   }
 
-  const accessToken = tokenService.generateAccessToken(user._id);
+  const accessToken = tokenService.generateAccessToken(user._id, user.name);
 
   return {
     access_token: accessToken,

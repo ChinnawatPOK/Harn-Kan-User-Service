@@ -10,8 +10,6 @@ const updateUserBodySchema = z
       .optional(),
 
     phone_number: z.string().trim().min(1, "Phone number is required").optional(),
-
-    notification_prefs: z.array(z.string()).optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
